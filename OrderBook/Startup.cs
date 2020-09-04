@@ -18,7 +18,6 @@ namespace OrderBook
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
             services.AddControllers();
             services.AddSingleton<OrderService>();
             services.AddMemoryCache();
