@@ -18,8 +18,12 @@ namespace OrderBook
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc();
             services.AddControllers();
             services.AddSingleton<OrderService>();
+            services.AddMemoryCache();
+            services.AddStackExchangeRedisCache(options =>
+                options.Configuration = "localhost:6379");
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using OrderBook.DTO.Orders;
 using OrderBook.Services;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text;
 
 namespace OrderBook.Controllers
 {
@@ -13,22 +15,46 @@ namespace OrderBook.Controllers
     {
 
         private readonly ILogger<OrderController> _logger;
+        private readonly IDistributedCache _distributedCache;
         private readonly OrderService _orderService;
 
-        public OrderController(ILogger<OrderController> logger, OrderService orderService)
+        public OrderController(
+            ILogger<OrderController> logger,
+            IDistributedCache distributedCache,
+            OrderService orderService
+        )
         {
             _logger = logger;
+            _distributedCache = distributedCache;
             _orderService = orderService;
         }
 
         [HttpGet]
-        public String Information()
+        public ContentResult Information()
         {
-            return "Hello World"; // todo : return some sort of instructions page later
+            string cacheKey = "info";
+            var information = _distributedCache.Get(cacheKey);
+
+            if (information != null)
+            {
+                Console.WriteLine("Fetch from cache");
+                return Content(Encoding.UTF8.GetString(information), "text/html");
+            }
+            else
+            {
+                Console.WriteLine("Fetch from file");
+                var fileString = System.IO.File.ReadAllText("Resources/Instructions.html", Encoding.UTF8);
+                var encodedString = Encoding.UTF8.GetBytes(fileString);
+                var options = new DistributedCacheEntryOptions()
+                    //.SetSlidingExpiration(TimeSpan.FromMinutes(1))
+                    .SetAbsoluteExpiration(DateTime.Now.AddSeconds(5));
+                _distributedCache.Set(cacheKey, encodedString, options);
+                return Content(fileString, "text/html");
+            }
         }
 
         [HttpGet("{name}")]
-        public String OrderBookDisplay(string name)
+        public string OrderBookDisplay(string name)
         {
             return _orderService.DisplayOrderBook(name);
         }
