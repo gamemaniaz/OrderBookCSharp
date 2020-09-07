@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Text;
+using log4net;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using OrderBook.DTO.Orders;
 using OrderBook.Services;
-using System.Text.Json;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text;
 
 namespace OrderBook.Controllers
 {
@@ -14,34 +14,38 @@ namespace OrderBook.Controllers
     public class OrderController : ControllerBase
     {
 
-        private readonly ILogger<OrderController> _logger;
         private readonly IDistributedCache _distributedCache;
         private readonly OrderService _orderService;
+        private readonly ILog log;
 
         public OrderController(
-            ILogger<OrderController> logger,
             IDistributedCache distributedCache,
-            OrderService orderService
+            OrderService orderService,
+            ILog log
         )
         {
-            _logger = logger;
             _distributedCache = distributedCache;
             _orderService = orderService;
+            this.log = log;
         }
 
         [HttpGet]
         public ContentResult Information()
         {
+            log.Info("Requesting for App Information");
             string cacheKey = "info";
             var information = _distributedCache.Get(cacheKey);
 
             if (information != null)
             {
+                log.Info("Retrieving App Information from Cache");
                 return Content(Encoding.UTF8.GetString(information), "text/html");
             }
             else
             {
-                var fileString = System.IO.File.ReadAllText("Resources/Instructions.html", Encoding.UTF8);
+                log.Info("Retrieving App Information from File");
+                var fileString = System.IO.File
+                    .ReadAllText("Resources/Instructions.html", Encoding.UTF8);
                 var encodedString = Encoding.UTF8.GetBytes(fileString);
                 var options = new DistributedCacheEntryOptions()
                     .SetAbsoluteExpiration(DateTime.Now.AddSeconds(5));
