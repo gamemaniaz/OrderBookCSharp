@@ -3,9 +3,9 @@ using System.Text;
 using log4net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using OrderBook.DTO.Orders;
 using OrderBook.Services;
+using StackExchange.Redis;
 
 namespace OrderBook.Controllers
 {
@@ -16,7 +16,7 @@ namespace OrderBook.Controllers
 
         private readonly IDistributedCache _distributedCache;
         private readonly OrderService _orderService;
-        private readonly ILog log;
+        private readonly ILog _log;
 
         public OrderController(
             IDistributedCache distributedCache,
@@ -26,30 +26,40 @@ namespace OrderBook.Controllers
         {
             _distributedCache = distributedCache;
             _orderService = orderService;
-            this.log = log;
+            _log = log;
         }
 
         [HttpGet]
         public ContentResult Information()
         {
-            log.Info("Requesting for App Information");
+            _log.Info("Requesting for App Information");
             string cacheKey = "info";
-            var information = _distributedCache.Get(cacheKey);
-
-            if (information != null)
+            try
             {
-                log.Info("Retrieving App Information from Cache");
-                return Content(Encoding.UTF8.GetString(information), "text/html");
+                var information = _distributedCache.Get(cacheKey);
+                if (information != null)
+                {
+                    _log.Info("Retrieving App Information from Cache");
+                    return Content(Encoding.UTF8.GetString(information), "text/html");
+                }
+                else
+                {
+                    _log.Info("Retrieving App Information from File");
+                    var fileString = System.IO.File
+                        .ReadAllText("Resources/Instructions.html", Encoding.UTF8);
+                    var encodedString = Encoding.UTF8.GetBytes(fileString);
+                    var options = new DistributedCacheEntryOptions()
+                        .SetAbsoluteExpiration(DateTime.Now.AddSeconds(5));
+                    _log.Info("Setting App Information to Cache");
+                    _distributedCache.Set(cacheKey, encodedString, options);
+                    return Content(fileString, "text/html");
+                }
             }
-            else
+            catch (RedisConnectionException)
             {
-                log.Info("Retrieving App Information from File");
+                _log.Error("Unable to connect to redis");
                 var fileString = System.IO.File
-                    .ReadAllText("Resources/Instructions.html", Encoding.UTF8);
-                var encodedString = Encoding.UTF8.GetBytes(fileString);
-                var options = new DistributedCacheEntryOptions()
-                    .SetAbsoluteExpiration(DateTime.Now.AddSeconds(5));
-                _distributedCache.Set(cacheKey, encodedString, options);
+                        .ReadAllText("Resources/Instructions.html", Encoding.UTF8);
                 return Content(fileString, "text/html");
             }
         }
@@ -57,12 +67,17 @@ namespace OrderBook.Controllers
         [HttpGet("{name}")]
         public string OrderBookDisplay(string name)
         {
+            _log.Info($"Display book information for {name}");
             return _orderService.DisplayOrderBook(name);
         }
 
         [HttpPost("Limit")]
         public IActionResult LimitOrder(LimitOrderRequestDto limitOrderRequest)
         {
+            _log.Info($"Placing limit order for " +
+                $"{limitOrderRequest.Name} by " +
+                $"{limitOrderRequest.Trader}");
+
             string status = _orderService.BookLimitOrder(
                 limitOrderRequest.Name,
                 limitOrderRequest.Side,
@@ -70,6 +85,7 @@ namespace OrderBook.Controllers
                 limitOrderRequest.Price,
                 limitOrderRequest.Trader
             );
+
             return new JsonResult(new LimitOrderResponseDto(status));
         }
     }
