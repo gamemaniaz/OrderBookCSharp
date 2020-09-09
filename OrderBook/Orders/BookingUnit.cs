@@ -49,7 +49,13 @@ namespace OrderBook.Orders
                     OrderBookUnit.AskMin++;
                 }
                 // NO FILL, ENQUEUE THE ORDER
-                OrderBookUnit.Book[price].Enqueue(new Order(side, size, price, trader));
+                OrderBookUnit.Book[price].Enqueue(new Order
+                {
+                    Price = price,
+                    Side = side,
+                    Size = size,
+                    Trader = trader
+                });
                 status = "QUEUED";
                 if (OrderBookUnit.BidMax < price)
                 {
@@ -93,7 +99,13 @@ namespace OrderBook.Orders
                     OrderBookUnit.BidMax--;
                 }
                 // NO FILL, ENQUEUE THE ORDER
-                OrderBookUnit.Book[price].Enqueue(new Order(side, size, price, trader));
+                OrderBookUnit.Book[price].Enqueue(new Order
+                {
+                    Price = price,
+                    Side = side,
+                    Size = size,
+                    Trader = trader
+                });
                 status = "QUEUED";
                 if (OrderBookUnit.AskMin > price)
                 {

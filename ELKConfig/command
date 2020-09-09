@@ -1,0 +1,8 @@
+docker run --rm -it \
+--link elasticsearch:elasticsearch \
+-v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/ELKConfig/logstash.yml:/usr/share/logstash/config/logstash.yml \
+-v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/OrderBook/logs_20200909.log:/var/log/logs_20200909.log \
+-v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/ELKConfig/logstash.conf:/usr/share/logstash/config/logstash.conf \
+--name logstash \
+docker.elastic.co/logstash/logstash:7.9.1 \
+-f /usr/share/logstash/config/logstash.conf
