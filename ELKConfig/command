@@ -1,15 +1,18 @@
 1) run elasticsearch:
-docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" --name elasticsearch docker.elastic.co/elasticsearch/elasticsearch:7.9.1
+
+docker run \
+-p 9200:9200 \
+-p 9300:9300 \
+-e "discovery.type=single-node" \
+--name elasticsearch \
+docker.elastic.co/elasticsearch/elasticsearch:7.9.1
 
 2) run kibana:
-docker run --link elasticsearch:elasticsearch -p 5601:5601 --name kibana docker.elastic.co/kibana/kibana:7.9.1
 
-3) run logstash
-docker run --rm -it \
+docker run \
 --link elasticsearch:elasticsearch \
--v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/ELKConfig/logstash.yml:/usr/share/logstash/config/logstash.yml \
--v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/OrderBook/logs_20200909.log:/var/log/logs_20200909.log \
--v /Users/louislimyingwei/Documents/Projects/OrderBookCSharp/ELKConfig/logstash.conf:/usr/share/logstash/config/logstash.conf \
---name logstash \
-docker.elastic.co/logstash/logstash:7.9.1 \
--f /usr/share/logstash/config/logstash.conf
+-p 5601:5601 \
+--name kibana \
+docker.elastic.co/kibana/kibana:7.9.1
+
+X) run logstash (unnecessary after new log4stash implementation, https://github.com/urielha/log4stash)

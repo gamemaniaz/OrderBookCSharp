@@ -16,5 +16,6 @@
     <PackageReference Include="Elasticsearch.Net" Version="7.9.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.7" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="3.1.0" />
+    <PackageReference Include="log4stash" Version="3.0.0" />
   </ItemGroup>
 </Project>
